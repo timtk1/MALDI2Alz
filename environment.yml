@@ -1,0 +1,21 @@
+name: M2C2
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - pip
+  - scipy
+  - numpy
+  - seaborn
+  - scikit-learn
+  - matplotlib
+  - pandas
+  - scanpy  
+  - pip:
+      - git+https://github.com/gtluu/pyTDFSDK.git
+      - pyimzml
+      - pyImagingMSpec
+      - tqdm
+      - xgboost
+      - shap
