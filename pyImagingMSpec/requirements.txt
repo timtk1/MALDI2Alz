@@ -1,0 +1,5 @@
+h5py  # Really ?
+matplotlib
+numpy
+git+https://github.com/alexandrovteam/pyMS.git@1e6a178b6daf5143c258a3b2933fc9fefead770f  # to be replaced by pyMSpec
+scipy
