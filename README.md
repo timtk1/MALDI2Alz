@@ -1,52 +1,38 @@
-# M2C2
+# README [![Documentation Status](https://readthedocs.org/projects/pyimagingmspec/badge/?version=latest)](http://pyimagingmspec.readthedocs.org/en/latest/?badge=latest)
 
-Multiscale MALDI-2 with Contrastive Computing
+This repository contains a Python library for processing imaging mass spectrometry data.
 
-## Installation
+See the documentation on [readthedocs](http://pyimagingmspec.readthedocs.org/en/latest/pyImagingMSpec.html)
 
-This project requires [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to manage its environment and dependencies. Please ensure you have Conda installed before proceeding with the setup.
+# Installation
 
-### Setting Up the Conda Environment
+* Dependancies:
+   * numpy
+   * scipy
+   * pyMS
+   * pyimzML
+   
+* install this branch with pip
+```
+sudo pip install pyImagingMSpec
+```
+# Package Contents
 
-1. **Clone the Repository**
+This library is currently includes
+* data container class for a imaging mass spectrum
+* tools for normalising imaging mass spectrometry data
+* data container class for ion images
+* tools for processing ion images
+* some preliminary implementations of data converation utilities
 
-    First, clone this repository to your local machine using Git:
+### Processing a dataset ###
+* Data should be in .imzml format    
 
-    ```bash
-    git clone https://github.com/timtk1/M2C2.git
-    cd M2C2
-    ```
 
-2. **Create the Conda Environment**
+### Who do I talk to? ###
+If you're having difficulty running the pipeline get in touch with
+http://www.embl.de/research/units/scb/alexandrov/
 
-    A `environment.yml` file is provided in the root of the project directory. Use this file to create a new Conda environment with all the required dependencies:
+# License
 
-    ```bash
-    conda env create -f environment.yml
-    ```
-
-    This command reads the `environment.yml` file in the current directory and creates a new environment named as specified in the file (e.g., `myenv`).
-
-3. **Activate the Conda Environment**
-
-    Once the environment is created, you can activate it using:
-
-    ```bash
-    conda activate myenv
-    ```
-
-    Make sure to replace `myenv` with the actual name of your environment if it's different.
-
-## Dependencies
-
-This project makes use of the following key dependencies:
-
-- **pyTDFSDK**: A Python package for processing timsTOF mass spectrometry data. It is installed directly from its GitHub repository.
-- **pyimzML**: A library for reading and writing imzML files in Python, useful for mass spectrometry imaging data.
-- **pyImagingMSpec**: An imaging mass spectrometry analysis package that provides tools for analyzing mass spectrometry imaging data.
-
-These dependencies are automatically installed when setting up the Conda environment as described above.
-
-## Usage
-
-After setting up the Conda environment and activating it, you can run the scripts provided in the repository to process and analyze your mass spectrometry imaging data.
+This project is licensed under Apache 2.0 license.
