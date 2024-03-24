@@ -4,13 +4,13 @@ Multiscale MALDI-2 with Contrastive Computing
 
 ## Installation
 
-This project requires [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to manage its environment and dependencies. Please ensure you have Conda installed before proceeding with the setup.
+This project uses [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to manage its environment and dependencies. Please ensure you have Conda installed before proceeding with the setup.
 
 ### Setting Up the Conda Environment
 
 1. **Clone the Repository**
 
-    First, clone this repository to your local machine using Git:
+    Clone this repository to your local machine with Git (or download):
 
     ```bash
     git clone https://github.com/timtk1/M2C2.git
@@ -43,7 +43,7 @@ This project makes use of the following key dependencies:
 
 - **pyTDFSDK**: A Python package for processing timsTOF mass spectrometry data. It is installed directly from its GitHub repository.
 - **pyimzML**: A library for reading and writing imzML files in Python, useful for mass spectrometry imaging data.
-- **pyImagingMSpec**: An imaging mass spectrometry analysis package that provides tools for analyzing mass spectrometry imaging data.
+- **pyImagingMSpec**: An imaging mass spectrometry analysis package that provides tools for analyzing mass spectrometry imaging data. Note that this package was developed in Python 2, so be sure to use the package as provided in this repo, with necessary compatability changes. 
 
 These dependencies are automatically installed when setting up the Conda environment as described above.
 
