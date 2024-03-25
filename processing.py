@@ -1,4 +1,8 @@
 import pandas as pd
+import sys
+sys.path.append('C:/Projects/AD Effort/Second Experiment/M2C2/pyImagingMSpec')
+sys.path.append('C:/Projects/AD Effort/Second Experiment/M2C2/pyMSpec')
+sys.path.append('C:/Projects/AD Effort/Second Experiment/M2C2/pyimzML') #download this package from github and change the path
 from pyTDFSDK.init_tdf_sdk import init_tdf_sdk_api
 from pyTDFSDK.classes import TsfData
 from pyTDFSDK.tsf import tsf_read_line_spectrum_v2, tsf_index_to_mz, tsf_read_profile_spectrum_v2
@@ -34,42 +38,48 @@ def loadimzMLData(file_name):
     imzML_dataset = inMemoryIMS(file_name)
     return imzML_dataset
 
-def process_d_file(d_file_path, return_one_imzml = False, raw_data = False, peak_pick=False, ppm=30, mz_range=(300,1000), prominence=1e3, sampling_rate=10):
 
+# Function to process .d files and generate mass spectrometry data
+def process_d_file(d_file_path, return_one_imzml = False, raw_data = False, peak_pick=False, ppm=30, mz_range=(300,1000), height=None, threshold=None, prominence=1e3, sampling_rate=10):
     """
     Processes Bruker .d files for mass spectrometry analysis.
 
     Args:
         d_file_path (list): List of paths to .d files.
         return_one_imzml (bool): If True, combines all files into one imzML file.
-
+        raw_data (bool): If True, extracts raw profile data instead of line spectrum.
+        peak_pick (bool): If True, picks peaks based on intensity.
+        ppm (int): Parts per million for peak picking.
+        mz_range (tuple): Tuple indicating the range of mz values to consider.
+        height (float): Required height of peaks. None by default.
+        threshold (float): Required threshold of peaks. None by default.
+        prominence (float): Minimum peak prominence for peak picking.
+        sampling_rate (int): Sampling rate for peak picking.
 
     Returns:
         None: Saves processed data to imzML files or combined imzML file.
-
     """
-
+    
     total_files = len(d_file_path)
     single_coords = []
     single_roi = []
     all_spectra_dfs = []
-
+    
     # Counter for ROI offset when processing multiple imaging files
     roi_offset = 0
-
+    
     for i, path in enumerate(d_file_path, start=1):
         print(f"Starting file {i}/{total_files}: {path}")
         print('Getting data...')
+        
         # Initialize the TDF-SDK library
         dll = init_tdf_sdk_api()
 
         # Load the data from the .d file
         data = TsfData(bruker_d_folder_name=path, tdf_sdk=dll)
 
- 
         # Get all spectra from the TSF file
         spectra_dfs = []
-
         for index, row in data.analysis['Frames'].iterrows():
             if raw_data:
                 index_array, intensity_array = tsf_read_profile_spectrum_v2(tdf_sdk=dll, handle=data.handle, frame_id=int(row['Id']))
@@ -85,199 +95,193 @@ def process_d_file(d_file_path, return_one_imzml = False, raw_data = False, peak
             coords = [f"{path}_{n}" for n in data.analysis['MaldiFrameInfo']['SpotName']]
             roi =  data.analysis['MaldiFrameInfo']['RegionNumber']
         elif data.analysis['GlobalMetadata']['MaldiApplicationType'] == 'Imaging':
-            coords = [f"{path}_{n}" for n in data.analysis['MaldiFrameInfo']['SpotName']]
+#             coords = [f"{path}_{n}" for n in data.analysis['MaldiFrameInfo']['SpotName']]
+            coords = [[x,y] for x,y in zip(data.analysis['MaldiFrameInfo']['XIndexPos'], data.analysis['MaldiFrameInfo']['YIndexPos'])]
             roi = [region_number + roi_offset for region_number in data.analysis['MaldiFrameInfo']['RegionNumber']]
             roi_offset += 1
-
-      
-
+       
         # Save data to individual or combined imzML files
-
         if return_one_imzml:
             single_coords.extend(coords)
             single_roi.extend(roi)
             all_spectra_dfs.extend(spectra_dfs)
-
-
+        
         else:
-            output_imzml_file = rf"{d_file_path[0]}\combined_imzml_data.imzML"
+            #setting output file directory and name
+            output_imzml_file = rf"{d_file_path[i-1]}\combined_imzml_data.imzML"
 
+            
+            if peak_pick:
+                #randomly select a subset of spectra dataframes based on the sampling rate
+                sample_indices = random.sample(range(len(spectra_dfs)),int(len(spectra_dfs)*sampling_rate/100))
+
+                #extract the selected spectra dataframes
+                selected_dfs = [spectra_dfs[n] for n in sample_indices]
+
+                #initialize empty lists to store average m/z values and intensities
+                avg_mzs = []
+                avg_intens = []
+
+                #iterate through the selected spectra dataframes to calculate average m/z and intensity 
+                for df in selected_dfs:
+                    avg_mzs.append(df['mz']) # extract m/z values
+                    avg_intens.append(df['intensity']) # extract intensities
+
+                #compute the mean of the m/z values and the intensities across all selected spectra data
+                avg_mzs = np.mean(np.array(avg_mzs),axis=0)
+                avg_intens = np.mean(np.array(avg_intens),axis=0)
+
+                #find peaks in the averaged intensities
+                peaks, _ = find_peaks(avg_intens, height=height, threshold=threshold, prominence=prominence)
+
+                #selecting the mz values for those peaks for binning
+                mz_bins = [avg_mzs[j] for j in peaks]
+
+                # Define the width of the bin in ppm
+                ppm_width = ppm
+
+                # Create an empty list to store the indices for each m/z value
+                indices_within_range = []
+
+                # Iterate over each m/z value
+                for mz_value in mz_bins:
+                    # Calculate the lower and upper bounds for the ±30 ppm range
+                    lower_bound = mz_value - mz_value * ppm_width / 1e6
+                    upper_bound = mz_value + mz_value * ppm_width / 1e6
+
+                    # Filter the DataFrame to keep only the rows within the specified range
+                    mask = (df['mz'] >= lower_bound) & (df['mz'] <= upper_bound)
+
+                    # Get the indices of the rows that meet the condition
+                    indices = df.index[mask].tolist()
+
+                    # Append the indices to the list
+                    indices_within_range.append(indices)
+
+                # Flatten the list of lists into a single list of indices
+                flattened_indices = [index for sublist in indices_within_range for index in sublist]   
+            
             print('writing data to imzml')
-
-           
-
+            
             # Initialize an empty list to hold the indices of items to be removed
-
             indices_to_remove = []
-
-       
-
+        
             # Writing combined data to a single imzML file
             with ImzMLWriter(output_imzml_file) as writer:
-                for i, coord in enumerate(single_coords):
-                    mz_array = all_spectra_dfs[i]['mz'].values # Extract m/z values
-                    intensity_array = all_spectra_dfs[i]['intensity'].values # Extract intensities                 
-
+                for k, coord in enumerate(coords):
+                    if peak_pick:
+                        mz_array = spectra_dfs[k].iloc[flattened_indices]['mz'].values # Extract m/z values
+                        intensity_array = spectra_dfs[k].iloc[flattened_indices]['intensity'].values # Extract intensities
+                    else:
+                        mz_array = spectra_dfs[k]['mz'].values # Extract m/z values
+                        intensity_array = spectra_dfs[k]['intensity'].values # Extract intensities
+                    
                     # Check if mz_array is empty
                     if mz_array.size == 0:
-                        print(f"Empty mz_array at index {i}, skipping...")
+                        print(f"Empty mz_array at index {k}, skipping...")
                         indices_to_remove.append(i)
                         continue  # Skip to the next iteration
-
-       
-
+        
                     # Write data and pseudo coordinates to the imzML file
-                    writer.addSpectrum(mzs=mz_array, intensities=intensity_array, coords=tuple([i, 1]))
-
-       
+                    writer.addSpectrum(mzs=mz_array, intensities=intensity_array, coords=tuple([k, 1]))
+        
             # Remove corresponding entries from single_coords and single_roi
             for index in sorted(indices_to_remove, reverse=True):
                 del single_coords[index]
                 del single_roi[index]
-
-
+        
             # save the updated coords and roi arrays
-            np.save(rf"{d_file_path[0]}\combined_coords.npy", single_coords)
-            np.save(rf"{d_file_path[0]}\combined_roi.npy", single_roi)
-
-
+            np.save(rf"{d_file_path[i-1]}\combined_coords.npy", coords)
+            np.save(rf"{d_file_path[i-1]}\combined_roi.npy", roi)
+    
     # Handling the combination of multiple files into a single imzML file
     if return_one_imzml:
         output_imzml_file = rf"{d_file_path[0]}\combined_imzml_data.imzML"
-
-
+    
         if peak_pick:
+            #randomly select a subset of spectra dataframes based on the sampling rate
             sample_indices = random.sample(range(len(all_spectra_dfs)),int(len(all_spectra_dfs)*sampling_rate/100))
-            selected_dfs = [all_spectra_dfs[i] for i in sample_indices]
+            
+            #extract the selected spectra dataframes
+            selected_dfs = [all_spectra_dfs[l] for l in sample_indices]
 
+            #initialize empty lists to store average m/z values and intensities
             avg_mzs = []
             avg_intens = []
 
-
+            #iterate through the selected spectra dataframes to calculate average m/z and intensity 
             for df in selected_dfs:
-                avg_mzs.append(df['mz'])
-                avg_intens.append(df['intensity'])
+                avg_mzs.append(df['mz']) # extract m/z values
+                avg_intens.append(df['intensity']) # extract intensities
 
+            #compute the mean of the m/z values and the intensities across all selected spectra data
             avg_mzs = np.mean(np.array(avg_mzs),axis=0)
             avg_intens = np.mean(np.array(avg_intens),axis=0)
 
-
-            peaks, _ = find_peaks(avg_intens, prominence=prominence)
-
- 
+            #find peaks in the averaged intensities
+            peaks, _ = find_peaks(avg_intens, height=height, threshold=threshold, prominence=prominence)
 
             #selecting the mz values for those peaks for binning
-            mz_bins = [avg_mzs[i] for i in peaks]
+            mz_bins = [avg_mzs[m] for m in peaks]
 
-        # Assuming df is your pandas DataFrame and mz_values is your set of m/z values
-
-        # Define the width of the bin in ppm
-
+            # Define the width of the bin in ppm
             ppm_width = ppm
 
- 
-
             # Create an empty list to store the indices for each m/z value
-
             indices_within_range = []
 
- 
             # Iterate over each m/z value
             for mz_value in mz_bins:
                 # Calculate the lower and upper bounds for the ±30 ppm range
                 lower_bound = mz_value - mz_value * ppm_width / 1e6
                 upper_bound = mz_value + mz_value * ppm_width / 1e6
 
-
                 # Filter the DataFrame to keep only the rows within the specified range
                 mask = (df['mz'] >= lower_bound) & (df['mz'] <= upper_bound)
-
 
                 # Get the indices of the rows that meet the condition
                 indices = df.index[mask].tolist()
 
- 
                 # Append the indices to the list
                 indices_within_range.append(indices)
 
-
-            # Now indices_within_range contains a list of indices for each m/z value within the specified range
-
             # Flatten the list of lists into a single list of indices
-
             flattened_indices = [index for sublist in indices_within_range for index in sublist]
+        
+        print('writing data to imzml')
 
-            print('writing data to imzml')
+        # Initialize an empty list to hold the indices of items to be removed
+        indices_to_remove = []
 
- 
-            # Initialize an empty list to hold the indices of items to be removed
+        # Writing combined data to a single imzML file
+        with ImzMLWriter(output_imzml_file) as writer:
+            for n, coord in enumerate(single_coords):
+                if peak_pick:
+                    mz_array = all_spectra_dfs[n].iloc[flattened_indices]['mz'].values # Extract m/z values
+                    intensity_array = all_spectra_dfs[n].iloc[flattened_indices]['intensity'].values # Extract intensities
+                else:
+                    mz_array = all_spectra_dfs[n]['mz'].values # Extract m/z values
+                    intensity_array = all_spectra_dfs[n]['intensity'].values # Extract intensities
 
-            indices_to_remove = []
+                # Check if mz_array is empty
+                if mz_array.size == 0:
+                    print(f"Empty mz_array at index {n}, skipping...")
+                    indices_to_remove.append(i)
+                    continue  # Skip to the next iteration
 
-            # Writing combined data to a single imzML file
+                # Write data and pseudo coordinates to the imzML file
+                writer.addSpectrum(mzs=mz_array, intensities=intensity_array, coords=tuple([i, 1]))
 
-            with ImzMLWriter(output_imzml_file) as writer:
-                for i, coord in enumerate(single_coords):
-                    mz_array = np.array(all_spectra_dfs[i].iloc[flattened_indices]['mz']) # Extract m/z values
-                    intensity_array = np.array(all_spectra_dfs[i].iloc[flattened_indices]['intensity']) # Extract intensities
- 
-                    if mz_array.size == 0:
-                        print(f"Empty mz_array at index {i}, skipping...")
-                        indices_to_remove.append(i)
-                        continue  # Skip to the next iteration
+        # Remove corresponding entries from single_coords and single_roi
+        single_coords = [coord for j, coord in enumerate(single_coords) if j not in indices_to_remove]
+        single_roi = [roi for j, roi in enumerate(single_roi) if j not in indices_to_remove]
 
- 
-                    # Write data and pseudo coordinates to the imzML file
-                    writer.addSpectrum(mzs=mz_array, intensities=intensity_array, coords=tuple([i, 1]))
+        # save the updated coords and roi arrays
+        np.save(rf"{d_file_path[0]}\combined_coords.npy", single_coords)
+        np.save(rf"{d_file_path[0]}\combined_roi.npy", single_roi)
 
-            # Remove corresponding entries from single_coords and single_roi
-            single_coords = [coord for j, coord in enumerate(single_coords) if j not in indices_to_remove]
-            single_roi = [roi for j, roi in enumerate(single_roi) if j not in indices_to_remove]
+        print(f"Your combined imzml was saved to {output_imzml_file}")
 
-
-            # save the updated coords and roi arrays
-            np.save(rf"{d_file_path[0]}\combined_coords.npy", single_coords)
-            np.save(rf"{d_file_path[0]}\combined_roi.npy", single_roi)
-
-            print(f"Your combined imzml was saved to {output_imzml_file}")
-           
-
-        else:
-            print('writing data to imzml')
-
-
-
-            # Initialize an empty list to hold the indices of items to be removed
-            indices_to_remove = []
-
- 
-
-            # Writing combined data to a single imzML file
-            with ImzMLWriter(output_imzml_file) as writer:
-                for i, coord in enumerate(single_coords):
-                    mz_array = np.array(all_spectra_dfs[i]['mz']) # Extract m/z values
-                    intensity_array = np.array(all_spectra_dfs[i]['intensity']) # Extract intensities
-
-                    # Check if mz_array is empty
-                    if mz_array.size == 0:
-                        print(f"Empty mz_array at index {i}, skipping...")
-                        indices_to_remove.append(i)
-                        continue  # Skip to the next iteration
-
-
-                    # Write data and pseudo coordinates to the imzML file
-                    writer.addSpectrum(mzs=mz_array, intensities=intensity_array, coords=tuple([i, 1]))
-
-            # Remove corresponding entries from single_coords and single_roi
-
-            single_coords = [coord for j, coord in enumerate(single_coords) if j not in indices_to_remove]
-            single_roi = [roi for j, roi in enumerate(single_roi) if j not in indices_to_remove]
- 
-            # save the updated coords and roi arrays
-            np.save(rf"{d_file_path[0]}\combined_coords.npy", single_coords)
-            np.save(rf"{d_file_path[0]}\combined_roi.npy", single_roi)
-
-            print(f"Your combined imzml was saved to {output_imzml_file}")
 
 def extractMZFeatures(imzml_dataset, ppm, mz_range, feature_n = 0.05, mz_bins = [], rebinning=False,threshold_value=0, peak_pick=True, prominence=1e3):
 
@@ -459,17 +463,6 @@ def extract_coords(file_path_d):
     # Return the list of coordinates
     return coords
 
-coords = extract_coords(d_file_path)
-
-def generate_padded_data(coords, intensity_values, pixel_size=50, rotate_90=0, flip_vertical=True, flip_horizontal=False):
-    # Implementation as shown in the provided script
-    # This function generates padded data for all data channels.
-
-# Additional utility functions and any global statements needed for setup can also be included here.
-
-# It's important to include error handling, logging, and any other best practices applicable to your project's needs.
-
-# For further customization and enhancement, consider integrating with your existing project's infrastructure, such as databases, web services, or data visualization tools.
 
 def generate_padded_data(coords, intensity_values, pixel_size=50, rotate_90=0, flip_vertical=True, flip_horizontal=False):
     """
