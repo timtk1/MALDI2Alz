@@ -139,6 +139,7 @@ def process_d_files(d_file_paths, return_one_imzml=False, raw_data=False, peak_p
     combined_roi = []
 
     for path in d_file_paths:
+        print('Extracting data from .d file...please wait')
         spectra_dfs, coords, roi = extract_data(path, dll, raw_data)
 
         if peak_pick:
