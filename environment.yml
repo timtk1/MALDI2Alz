@@ -15,7 +15,6 @@ dependencies:
   - pip:
       - git+https://github.com/gtluu/pyTDFSDK.git
       - pyimzml
-      - pyImagingMSpec
       - tqdm
       - xgboost
       - shap
