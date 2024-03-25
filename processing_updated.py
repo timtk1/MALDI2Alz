@@ -149,11 +149,12 @@ def process_d_files(d_file_paths, return_one_imzml=False, raw_data=False, peak_p
             combined_coords.extend(coords)
             combined_roi.extend(roi)
         else:
-            output_path = f"{path}_processed.imzML"
+            print(spectra_dfs)
+            output_path = rf"{path}\processed.imzML"
             write_data_to_imzml(output_path, spectra_dfs, coords, peak_pick)
 
     if return_one_imzml:
-        combined_output_path = "combined_processed.imzML"
+        combined_output_path = rf"{d_file_paths[0]}\combined_processed.imzML"
         write_data_to_imzml(combined_output_path, combined_spectra_dfs, combined_coords, peak_pick)
         print("Combined imzML file has been created.")
     
