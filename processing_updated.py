@@ -114,7 +114,7 @@ def write_data_to_imzml(output_path, spectra_dfs, coords, peak_pick):
 
     print(f"Data successfully written to {output_path}")
 
-def process_d_files(d_file_paths, return_one_imzml=False, raw_data=False, peak_pick=False, ppm=30, mz_range=(300,1000), height=None, threshold=None, prominence=1e3, sampling_rate=10):
+def process_d_files(d_file_paths, return_one_imzml=False, raw_data=False, peak_pick=False, ppm=30, mz_range=(300,1000), height=None, threshold=None, prominence=None, sampling_rate=10):
     """
     Processes Bruker .d files for mass spectrometry analysis.
 
