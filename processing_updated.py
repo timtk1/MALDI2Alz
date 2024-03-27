@@ -1,9 +1,3 @@
-import pandas as pd
-from pyTDFSDK.init_tdf_sdk import init_tdf_sdk_api
-from pyTDFSDK.classes import TsfData
-from pyTDFSDK.tsf import tsf_read_line_spectrum_v2, tsf_index_to_mz, tsf_read_profile_spectrum_v2
-from pyimzml.ImzMLWriter import ImzMLWriter
-from pyimzml.ImzMLParser import ImzMLParser
 import numpy as np
 import random
 from tqdm import tqdm
@@ -23,8 +17,8 @@ def init_sdk():
     except Exception as e:
         print(f"Error initializing TDF SDK: {e}")
         raise
-
-def extract_data(path, dll, raw_data):
+        
+def extract_data(path, dll, raw_data, peak_indices=None):
     """
     Extract spectra and coordinate information from a .d file.
 
@@ -41,25 +35,30 @@ def extract_data(path, dll, raw_data):
     coords = []
     roi = []
 
-    for index, row in data.analysis['Frames'].iterrows():
+    for index, row in tqdm(data.analysis['Frames'].iterrows(), total=data.analysis['Frames'].shape[0]):
         if raw_data:
             index_array, intensity_array = tsf_read_profile_spectrum_v2(tdf_sdk=dll, handle=data.handle, frame_id=int(row['Id']))
         else:
             index_array, intensity_array = tsf_read_line_spectrum_v2(tdf_sdk=dll, handle=data.handle, frame_id=int(row['Id']))
         mz_array = tsf_index_to_mz(tdf_sdk=dll, handle=data.handle, frame_id=int(row['Id']), indices=index_array)
-        spectra_dfs.append(pd.DataFrame({'mz': mz_array, 'intensity': intensity_array}))
+        
+        if peak_indices:
+            spectra_dfs.append(pd.DataFrame({'mz': mz_array[peak_indices], 'intensity': intensity_array[peak_indices]}))
+        else:        
+            spectra_dfs.append(pd.DataFrame({'mz': mz_array, 'intensity': intensity_array}))
 
     if data.analysis['GlobalMetadata']['MaldiApplicationType'] == 'SingleSpectra':
         coords = [f"{path}_{n}" for n in data.analysis['MaldiFrameInfo']['SpotName']]
         roi = data.analysis['MaldiFrameInfo']['RegionNumber']
+        paths = [f"{path}_{n}" for n in data.analysis['MaldiFrameInfo']['SpotName']]
     elif data.analysis['GlobalMetadata']['MaldiApplicationType'] == 'Imaging':
         coords = [[x,y] for x,y in zip(data.analysis['MaldiFrameInfo']['XIndexPos'], data.analysis['MaldiFrameInfo']['YIndexPos'])]
         roi = data.analysis['MaldiFrameInfo']['RegionNumber']
+        paths = [f"{path}_{n}" for n in data.analysis['MaldiFrameInfo']['SpotName']]
 
-    return spectra_dfs, coords, roi
+    return spectra_dfs, coords, roi, paths
 
-
-def perform_peak_picking(spectra_dfs, sampling_rate, ppm, height, threshold, prominence):
+def perform_peak_picking(path, dll, raw_data, sampling_rate, ppm, height, threshold, prominence):
     """
     Perform peak picking on the given spectra dataframes.
 
@@ -74,26 +73,89 @@ def perform_peak_picking(spectra_dfs, sampling_rate, ppm, height, threshold, pro
     Returns:
         list: List of processed spectra dataframes with peaks.
     """
-    processed_spectra_dfs = []
-    for df in tqdm(spectra_dfs, desc='Performing Peak Picking:'):
-        # Apply sampling
-        sampled_df = df.sample(frac=sampling_rate / 100) if sampling_rate < 100 else df
+    print('starting peak picking')
+    
+    data = TsfData(bruker_d_folder_name=path, tdf_sdk=dll)
+    spectra_dfs = []
+    coords = []
+    roi = []
 
-        # Perform peak detection
-        peaks, _ = find_peaks(sampled_df['intensity'], height=height, threshold=threshold, prominence=prominence)
+    selected_indices = random.sample(range(data.analysis['Frames'].shape[0]),int(data.analysis['Frames'].shape[0]*sampling_rate/100))
+    
+    for index in tqdm(selected_indices, desc='getting sampled data for average spectrum'):
+        row = data.analysis['Frames'].iloc[index]
+        if raw_data:
+            index_array, intensity_array = tsf_read_profile_spectrum_v2(tdf_sdk=dll, handle=data.handle, frame_id=int(row['Id']))
+        else:
+            index_array, intensity_array = tsf_read_line_spectrum_v2(tdf_sdk=dll, handle=data.handle, frame_id=int(row['Id']))
+        mz_array = tsf_index_to_mz(tdf_sdk=dll, handle=data.handle, frame_id=int(row['Id']), indices=index_array)
 
-        # Extract peaks
-        peak_mzs = sampled_df.iloc[peaks]['mz'].values
-        peak_intensities = sampled_df.iloc[peaks]['intensity'].values
+        # Create a DataFrame for each row's data and append it to the list
+        spectra_dfs.append(pd.DataFrame({'mz': mz_array, 'intensity': intensity_array}))        
+        
 
-        # Filter based on ppm (this logic remains as per your original implementation)
-        # Assuming placeholder for now; adjust according to your specific ppm filtering logic
+    #initialize empty lists to store average m/z values and intensities
+    avg_mzs = []
+    avg_intens = []
 
-        processed_spectra_dfs.append(pd.DataFrame({'mz': peak_mzs, 'intensity': peak_intensities}))
+    #iterate through the selected spectra dataframes to calculate average m/z and intensity 
+    for df in spectra_dfs:
+        avg_mzs.append(df['mz']) # extract m/z values
+        avg_intens.append(df['intensity']) # extract intensities
 
-    return processed_spectra_dfs
+    #compute the mean of the m/z values and the intensities across all selected spectra data
+    avg_mzs = np.mean(np.array(avg_mzs),axis=0)
+    avg_intens = np.sum(np.array(avg_intens),axis=0)
+    
+    plt.figure()
+    plt.plot(avg_mzs, avg_intens)
+    plt.show()
+    
+    ylim = int(input("Enter your y max value:"))
+    
+    plt.plot(avg_mzs, avg_intens)
+    plt.ylim(0,ylim)
+    plt.show()
+    
+    height2 = int(input("Enter your selected height:"))
+    
+    print("continuing peak picking...")
+    
+    #find peaks in the averaged intensities
+    peaks, _ = find_peaks(avg_intens, height=height2, threshold=threshold, prominence=prominence)
 
-def write_data_to_imzml(output_path, spectra_dfs, coords, peak_pick):
+    #selecting the mz values for those peaks for binning
+    mz_bins = [avg_mzs[j] for j in peaks]
+
+    # Define the width of the bin in ppm
+    ppm_width = ppm
+
+    # Create an empty list to store the indices for each m/z value
+    indices_within_range = []
+
+    # Iterate over each m/z value
+    for mz_value in mz_bins:
+        # Calculate the lower and upper bounds for the ±30 ppm range
+        lower_bound = mz_value - mz_value * ppm_width / 1e6
+        upper_bound = mz_value + mz_value * ppm_width / 1e6
+
+        # Filter the DataFrame to keep only the rows within the specified range
+        mask = (df['mz'] >= lower_bound) & (df['mz'] <= upper_bound)
+
+        # Get the indices of the rows that meet the condition
+        indices = df.index[mask].tolist()
+
+        # Append the indices to the list
+        indices_within_range.append(indices)
+
+    # Flatten the list of lists into a single list of indices
+    peaks = [index for sublist in indices_within_range for index in sublist]
+    
+    print('peaks found')
+
+    return peaks
+
+def write_data_to_imzml(output_path, numpy_path, spectra_dfs, coords, roi, paths, peak_pick):
     """
     Write processed data to imzML file(s).
 
@@ -111,6 +173,12 @@ def write_data_to_imzml(output_path, spectra_dfs, coords, peak_pick):
             mzs = df['mz'].values
             intensities = df['intensity'].values
             writer.addSpectrum(mzs, intensities, coord)
+            
+    print(rf'saving numpy files to {numpy_path}\coords.np')
+    np.save(rf"{numpy_path}\coords.npy", coords)
+    np.save(rf"{numpy_path}\rois.npy", roi)
+    np.save(rf"{numpy_path}\paths.npy", paths)
+            
 
     print(f"Data successfully written to {output_path}")
 
@@ -137,26 +205,29 @@ def process_d_files(d_file_paths, return_one_imzml=False, raw_data=False, peak_p
     combined_spectra_dfs = []
     combined_coords = []
     combined_roi = []
-
+    combined_paths = []
+    
     for path in d_file_paths:
-        print('Extracting data from .d file...please wait')
-        spectra_dfs, coords, roi = extract_data(path, dll, raw_data)
-
+        print(f'Extracting data from {path}...please wait')
+        
         if peak_pick:
-            spectra_dfs = perform_peak_picking(spectra_dfs, sampling_rate, ppm, height, threshold, prominence)
+            peak_indices = perform_peak_picking(path, dll, raw_data, sampling_rate, ppm, height, threshold, prominence)
+            spectra_dfs, coords, roi, paths = extract_data(path, dll, raw_data, peak_indices)
+        else:
+            spectra_dfs, coords, roi, paths = extract_data(path, dll, raw_data)
 
         if return_one_imzml:
             combined_spectra_dfs.extend(spectra_dfs)
             combined_coords.extend(coords)
             combined_roi.extend(roi)
+            combined_paths.extend(paths)
         else:
-            print(spectra_dfs)
             output_path = rf"{path}\processed.imzML"
-            write_data_to_imzml(output_path, spectra_dfs, coords, peak_pick)
+            write_data_to_imzml(output_path, path, spectra_dfs, coords, roi, paths, peak_pick)
 
     if return_one_imzml:
         combined_output_path = rf"{d_file_paths[0]}\combined_processed.imzML"
-        write_data_to_imzml(combined_output_path, combined_spectra_dfs, combined_coords, peak_pick)
+        write_data_to_imzml(combined_output_path, d_file_paths[0], combined_spectra_dfs, combined_coords,combined_roi, combined_paths, peak_pick)
         print("Combined imzML file has been created.")
     
 # Function to load imzML data into memory
@@ -175,7 +246,7 @@ def loadimzMLData(file_name):
     return imzML_dataset
 
 # Function to generate or update m/z bins based on linear spacing or peak picking
-def generate_or_update_mz_bins(mz_range, ppm, imzml_dataset=None, peak_pick=False, height=None, threshold=None, prominence=1e3):
+def generate_or_update_mz_bins(mz_range, ppm, imzml_dataset=None, peak_pick=False, height=None, threshold=None, prominence=None):
     """
     Generates or updates m/z bins for analysis. Can perform linear binning or use peak picking to determine bins.
 
@@ -206,6 +277,7 @@ def generate_or_update_mz_bins(mz_range, ppm, imzml_dataset=None, peak_pick=Fals
         
         # Find peaks in the average intensity spectrum.
         # Peaks are identified based on specified height, threshold, and prominence parameters.
+        #peaks, _ = find_peaks(avg_intens, height=height, threshold=threshold, prominence=prominence)
         peaks, _ = find_peaks(avg_intens, height=height, threshold=threshold, prominence=prominence)
         
         # Generate m/z bins based on the m/z values of the detected peaks.
@@ -242,7 +314,7 @@ def average_spectrum(imzml_dataset):
     # Calculate the mean of m/z ratios and intensities across all spectra
     # This involves converting the lists to numpy arrays for efficient computation
     avg_mz = np.mean(np.array(avg_mzs), axis=0)
-    avg_intens = np.mean(np.array(avg_intens), axis=0)
+    avg_intens = np.sum(np.array(avg_intens), axis=0)
     
     # Return the average m/z ratios and intensities as a tuple of numpy arrays
     return avg_mz, avg_intens
@@ -325,7 +397,7 @@ def construct_datacube(imzml_dataset, mz_bins_use, ppm, feature_n, threshold_val
 
 
 # Main function to orchestrate the m/z feature extraction from an imzML dataset
-def extractMZFeatures(imzml_dataset, ppm, mz_range, feature_n=0.05, mz_bins=[], rebinning=False, threshold_value=0, peak_pick=True, height=None, threshold=None, prominence=1e3):
+def extractMZFeatures(imzml_dataset, ppm, mz_range, feature_n=0.05, mz_bins=[], rebinning=False, threshold_value=0, peak_pick=True, height=None, threshold=None, prominence=None):
     """
     Main function to extract m/z features from an imzML dataset.
 
