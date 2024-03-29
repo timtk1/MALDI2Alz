@@ -1,8 +1,8 @@
 import pandas as pd
 import sys
-sys.path.append('C:/Projects/AD Effort/Second Experiment/M2C2/pyImagingMSpec')
-sys.path.append('C:/Projects/AD Effort/Second Experiment/M2C2/pyMSpec')
-sys.path.append('C:/Projects/AD Effort/Second Experiment/M2C2/pyimzML') #download this package from github and change the path
+sys.path.append('./pyImagingMSpec')
+sys.path.append('./pyMSpec')
+sys.path.append('./pyimzML') #download this package from github and change the path
 from pyTDFSDK.init_tdf_sdk import init_tdf_sdk_api
 from pyTDFSDK.classes import TsfData
 from pyTDFSDK.tsf import tsf_read_line_spectrum_v2, tsf_index_to_mz, tsf_read_profile_spectrum_v2
