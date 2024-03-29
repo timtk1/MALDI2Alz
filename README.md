@@ -1,6 +1,6 @@
 # M2C2
 
-Multiscale MALDI-2 with Contrastive Computing
+Multiscale MALDI-2 
 
 ## Installation
 
