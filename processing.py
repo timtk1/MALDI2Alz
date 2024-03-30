@@ -17,6 +17,7 @@ import matplotlib.lines as mlines
 from scipy.signal import find_peaks
 from pyimzml.compression import NoCompression, ZlibCompression
 import re
+from scipy.ndimage import rotate
 
 def init_sdk():
     """
