@@ -60,6 +60,7 @@ def extract_data(path, dll, raw_data, peak_indices=None):
 
     if data.analysis['GlobalMetadata']['MaldiApplicationType'] == 'SingleSpectra':
         coords = [f"{path}_{n}" for n in data.analysis['MaldiFrameInfo']['SpotName']]
+        coords = [tuple([i,1]) for i,coord in enumerate(coords)]
         roi = data.analysis['MaldiFrameInfo']['RegionNumber']
         paths = [f"{path}_{n}" for n in data.analysis['MaldiFrameInfo']['SpotName']]
     elif data.analysis['GlobalMetadata']['MaldiApplicationType'] == 'Imaging':
