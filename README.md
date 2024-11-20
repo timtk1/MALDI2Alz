@@ -49,7 +49,10 @@ This project makes use of the following key dependencies:
 
 | Script | Description |
 | --- | --- |
-| [RegionalAnalysis_ManualAnnotation.mat]([https://github.com/richardxie1119/multiscale_analysis/blob/main/coronal3D.ipynb](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m)) | Extract lipid profiles from specific brain regions |
+| [Register_Fluorescence_to_MSI.mat](https://github.com/timtk1/MALDI2Alz/blob/main/Register_Fluorescence_to_MSI.m) |Register optical images to MSI data, extract lipids from plaque regions |
+| [RegionalAnalysis_ManualAnnotation.mat](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) | Extract lipid profiles from specific brain regions |
+
+
 
 
 
