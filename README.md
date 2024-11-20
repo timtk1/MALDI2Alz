@@ -43,10 +43,22 @@ This project makes use of the following key dependencies:
 
 - **pyTDFSDK**: A Python package for processing timsTOF mass spectrometry data. It is installed directly from its GitHub repository.
 - **pyimzML**: A library for reading and writing imzML files in Python, useful for mass spectrometry imaging data.
-- **pyImagingMSpec**: An imaging mass spectrometry analysis package that provides tools for analyzing mass spectrometry imaging data. Note that this package was developed in Python 2, so be sure to use the package as provided in this repo, with necessary compatability changes. 
+- **pyImagingMSpec**: An imaging mass spectrometry analysis package that provides tools for analyzing mass spectrometry imaging data. Note that this package was developed in Python 2, so be sure to use the package as provided in this repo, with necessary compatability changes.
 
-These dependencies are automatically installed when setting up the Conda environment as described above.
+## Data analysis scripts
 
-## Usage
+| Script | Description |
+| --- | --- |
+| [RegionalAnalysis_ManualAnnotation.mat]([https://github.com/richardxie1119/multiscale_analysis/blob/main/coronal3D.ipynb](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m)) | Extract lipid profiles from specific brain regions |
 
-After setting up the Conda environment and activating it, you can run the scripts provided in the repository to process and analyze your mass spectrometry imaging data.
+
+
+ ## Example data
+Data can be accessed [here](https://databank.illinois.edu/datasets/IDB-4907703).
+- `Animal_1_5xFAD_s1.mat`: A MATLAB array of 50 micron spatial resolution imaging of whole brain slice from a 5xFAD animal.
+- `mz_bins_use_neg.mat`: A MATLAB array of the m/z channels all MSI images (whole brain slice, 50 micron spatial resolution) were binned to in order to enable comparison
+- `Animal3_S18_HR.mat`: A MATLAB array of high-spatial-resolution (5 micron) imaging of a 5xFAD mouse hippocampus and cortex. Due to the large dataset, 22 m/z channels ('mz_features_22.mat') are included.
+- `Animal5_S18_HR.mat`: A MATLAB array of high-spatial-resolution (5 micron) imaging of a WT mouse hippocampus and cortex. Due to the large dataset, 22 m/z channels ('mz_features_22.mat') are included.
+- `mz_features_22.mat`: A MATLAB array of the 22 m/z channels included in the high spatial resolution imaging data
+
+
