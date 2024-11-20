@@ -49,8 +49,11 @@ This project makes use of the following key dependencies:
 
 | Script | Description |
 | --- | --- |
-| [Register_Fluorescence_to_MSI.mat](https://github.com/timtk1/MALDI2Alz/blob/main/Register_Fluorescence_to_MSI.m) |Register optical images to MSI data, extract lipids from plaque regions |
-| [RegionalAnalysis_ManualAnnotation.mat](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) | Extract lipid profiles from specific brain regions |
+| [Register_Fluorescence_to_MSI.m](https://github.com/timtk1/MALDI2Alz/blob/main/Register_Fluorescence_to_MSI.m) |Register optical images to MSI data, extract lipids from plaque regions |
+| [RegionalAnalysis_ManualAnnotation.m](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) | Extract lipid profiles from specific brain regions |
+| [PCA_MSI.m ](https://github.com/timtk1/MALDI2Alz/blob/main/Functions/%20PCA_MSI.m) | Function to fun PCA on MSI data. Used in registration script to generate MSI image with sufficient morphology for registration. |
+| [ProcessMSIData.py](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) | Parse raw Bruker .d data, peak pick, bin, and export as .mat file |
+
 
 
 
