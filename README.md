@@ -1,6 +1,5 @@
-# M2C2
-
-Multiscale MALDI-2 
+# Multimodal MALDI-2
+Multimodal MALDI-2 Imaging for Spatial Neurolipidomics in Alzheimer's disease
 
 ## Installation
 
