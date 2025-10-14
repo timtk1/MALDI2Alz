@@ -29,20 +29,16 @@ for i = 1:length(regions)
 
     fprintf('Draw polygons for %s\n', region);  % Inform the user which region to draw
 
-    % Initialize figure
     figure;
     imagesc(msi_slice); colormap(gray); axis image;
 
-    % Draw the first polygon ROI for the current region
     title(sprintf('Draw the first polygon ROI for %s', region));
     h1 = drawpolygon;
     wait(h1); % Wait for the user to finish drawing
 
-    % Create mask for the first ROI
     mask1 = poly2mask(h1.Position(:,1), h1.Position(:,2), size(msi_slice,1), size(msi_slice,2));
 
     if ~strcmp(region, 'MidBrain')
-        % If the region is not MidBrain, draw a second polygon ROI
         title(sprintf('Draw the second polygon ROI for %s', region));
         h2 = drawpolygon;
         wait(h2); % Wait for the user to finish drawing
@@ -115,3 +111,4 @@ end
 function closestIndex = findClosestMz(targetValue, mzArray)
     [~, closestIndex] = min(abs(mzArray - targetValue));
 end
+
