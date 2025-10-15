@@ -1,5 +1,7 @@
 # Multimodal MALDI-2
-Multimodal MALDI-2 Imaging for Spatial Neurolipidomics in Alzheimer's disease
+Multimodal MALDI-2 Imaging for Spatial Neurolipidomics in Alzheimer's disease.
+
+This repo contains code for (1) parsing raw Bruker timsTOF MALDI-2 data into Python and MATLAB, (2) registering MALDI imaging data to fluroescence data and extracting plaque-features, (3) extracting spatial transcriptomic data from external data sets into MATLAB.
 
 ## Installation
 
@@ -52,7 +54,8 @@ This project makes use of the following key dependencies:
 | [RegionalAnalysis_ManualAnnotation.m](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) | Extract lipid profiles from specific brain regions |
 | [PCA_MSI.m ](https://github.com/timtk1/MALDI2Alz/blob/main/Functions/%20PCA_MSI.m) | Function to fun PCA on MSI data. Used in registration script to generate MSI image with sufficient morphology for registration. |
 | [ProcessMSIData.py](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) | Parse raw Bruker .d data, peak pick, bin, and export as .mat file |
-| [Extract_ExpressionProfiles_BMC.py](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) |Extract expression profiles from [Lee et al., BMC Genomics.](https://link.springer.com/article/10.1186/s12864-024-10434-8)  |
+| [Extract_ExpressionProfiles_BMC.py](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) |Extract expression profiles (spatial transcriptomic) from [Lee et al., BMC Genomics.](https://link.springer.com/article/10.1186/s12864-024-10434-8)  |
+| [Extract_ExpressionProfiles_BMC.py](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) |Extract expression profiles (spatial transcriptomic) from [Chen et al., Cell]([https://link.springer.com/article/10.1186/s12864-024-10434-8](https://www.cell.com/cell/fulltext/S0092-8674(20)30815-1?uuid=uuid%3A8986b3c8-3884-474b-b6a1-9476ce6f04fd))  |
 
 
 
