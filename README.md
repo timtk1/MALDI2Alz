@@ -52,6 +52,7 @@ This project makes use of the following key dependencies:
 | [RegionalAnalysis_ManualAnnotation.m](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) | Extract lipid profiles from specific brain regions |
 | [PCA_MSI.m ](https://github.com/timtk1/MALDI2Alz/blob/main/Functions/%20PCA_MSI.m) | Function to fun PCA on MSI data. Used in registration script to generate MSI image with sufficient morphology for registration. |
 | [ProcessMSIData.py](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) | Parse raw Bruker .d data, peak pick, bin, and export as .mat file |
+| [Extract_ExpressionProfiles_BMC.py](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) |Extract expression profiles from [Lee et al., BMC Genomics.](https://link.springer.com/article/10.1186/s12864-024-10434-8)  |
 
 
 
