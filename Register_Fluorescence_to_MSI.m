@@ -140,7 +140,7 @@ Next, to select control pixels, regions surrounding the plaques are
 selected using dilation.
 %}
 
-Thiosgbin = Thios_binary_mask_transform_dilated;%imbinarize(Thios_binary_mask_transform_dilated); % binarize i geuss
+Thiosgbin = Thios_binary_mask_transform_dilated;%imbinarize(Thios_binary_mask_transform_dilated); % binarize
 num_test_pixels = nnz(Thiosgbin);
 
 control_dilation = strel('square', 5);
@@ -186,8 +186,3 @@ MSI_data_control_pixels2d_filtered = MSI_data_control_pixels2d(nonZeroRowscontro
 
 mean_plaque_pixels = mean( MSI_data_plaque_pixels2d_filtered,1);
 mean_control_pixels = mean( MSI_data_control_pixels2d_filtered,1);
-
-subspec = mean_plaque_pixels - mean_control_pixels;
-
-% plot subtraction plot for single section
-figure; stem(mz_bins_use_neg,subspec,'marker','none')
