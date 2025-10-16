@@ -54,20 +54,18 @@ This project makes use of the following key dependencies:
 | [RegionalAnalysis_ManualAnnotation.m](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) | Extract lipid profiles from specific brain regions |
 | [PCA_MSI.m ](https://github.com/timtk1/MALDI2Alz/blob/main/Functions/%20PCA_MSI.m) | Function to fun PCA on MSI data. Used in registration script to generate MSI image with sufficient morphology for registration. |
 | [ProcessMSIData.py](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) | Parse raw Bruker .d data, peak pick, bin, and export as .mat file |
-| [Extract_ExpressionProfiles_BMC.py](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) |Extract expression profiles (spatial transcriptomic) from [Lee et al., BMC Genomics.](https://link.springer.com/article/10.1186/s12864-024-10434-8)  |
-| [Extract_ExpressionProfiles_BMC.py](https://github.com/timtk1/MALDI2Alz/blob/main/RegionalAnalysis_ManualAnnotation.m) |Extract expression profiles (spatial transcriptomic) from [Chen et al., Cell]([https://link.springer.com/article/10.1186/s12864-024-10434-8](https://www.cell.com/cell/fulltext/S0092-8674(20)30815-1?uuid=uuid%3A8986b3c8-3884-474b-b6a1-9476ce6f04fd))  |
-
-
-
+| [Extract_ExpressionProfiles_BMC.m](https://github.com/timtk1/MALDI2Alz/blob/main/Extract_ExpressionProfiles_BMC.m) |Extract expression profiles (spatial transcriptomic) from [Lee et al., BMC Genomics.](https://link.springer.com/article/10.1186/s12864-024-10434-8)  |
+| [Extract_ExpressionProfiles_Cell.m](https://github.com/timtk1/MALDI2Alz/blob/main/Extract_ExpressionProfiles_Cell.m) |Extract expression profiles (spatial transcriptomic) from [Chen et al., Cell](https://www.cell.com/cell/fulltext/S0092-8674(20)30815-1?uuid=uuid%3A8986b3c8-3884-474b-b6a1-9476ce6f04fd)|
 
 
 
  ## Example data
-Data can be accessed [here](https://databank.illinois.edu/datasets/IDB-4907703).
+Data can be accessed [here](https://databank.illinois.edu/datasets/IDB-8630582).
 - `Animal_1_5xFAD_s1.mat`: A MATLAB array of 50 micron spatial resolution imaging of whole brain slice from a 5xFAD animal.
 - `mz_bins_use_neg.mat`: A MATLAB array of the m/z channels all MSI images (whole brain slice, 50 micron spatial resolution) were binned to in order to enable comparison
 - `Animal3_S18_HR.mat`: A MATLAB array of high-spatial-resolution (5 micron) imaging of a 5xFAD mouse hippocampus and cortex. Due to the large dataset, 22 m/z channels ('mz_features_22.mat') are included.
 - `Animal5_S18_HR.mat`: A MATLAB array of high-spatial-resolution (5 micron) imaging of a WT mouse hippocampus and cortex. Due to the large dataset, 22 m/z channels ('mz_features_22.mat') are included.
 - `mz_features_22.mat`: A MATLAB array of the 22 m/z channels included in the high spatial resolution imaging data
-
+- 'Region Masks BMC.mat' : MATLAB ararys of binary masks for each annotated brain region from the BMC Genomics data set
+- 'Region Masks Cell.mat' : MATLAB ararys of binary masks for each annotated brain region from the Cell data set
 
